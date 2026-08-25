@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#2563eb">
+  <meta name="description" content="Academia Espacial: juegos educativos infantiles de sumas y secuencias.">
+  <title>Academia Espacial</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { fredoka: ['Fredoka', 'sans-serif'] },
+          boxShadow: {
+            game: '0 10px 0 rgba(30,64,175,.20), 0 20px 45px rgba(30,64,175,.25)',
+            card: '0 8px 0 rgba(99,102,241,.16), 0 16px 28px rgba(30,64,175,.16)'
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    * { -webkit-tap-highlight-color: transparent; }
+    body { font-family: "Fredoka", sans-serif; }
+    .sky-pattern {
+      background-color: #38bdf8;
+      background-image:
+        radial-gradient(circle at 12% 20%, rgba(255,255,255,.42) 0 3px, transparent 4px),
+        radial-gradient(circle at 82% 14%, rgba(255,255,255,.35) 0 2px, transparent 3px),
+        linear-gradient(180deg, #38bdf8 0%, #67e8f9 48%, #a7f3d0 100%);
+    }
+    .float-slow { animation: float 5s ease-in-out infinite; }
+    .float-medium { animation: float 4s ease-in-out infinite reverse; }
+    .robot-idle { animation: robotIdle 2.6s ease-in-out infinite; transform-origin: bottom; }
+    .card-enter { animation: cardEnter .55s cubic-bezier(.2,.8,.2,1) both; }
+    .card-enter:nth-child(2) { animation-delay: .12s; }
+    @keyframes float {
+      0%,100% { transform: translateY(0) rotate(-1deg); }
+      50% { transform: translateY(-12px) rotate(1deg); }
+    }
+    @keyframes robotIdle {
+      0%,100% { transform: translateY(0) rotate(-1deg); }
+      50% { transform: translateY(-6px) rotate(1deg); }
+    }
+    @keyframes cardEnter {
+      from { transform: translateY(24px) scale(.95); opacity: 0; }
+      to { transform: translateY(0) scale(1); opacity: 1; }
+    }
+    .mini-shape {
+      display: inline-block; width: 38px; height: 38px;
+      border: 3px solid rgba(15,23,42,.14);
+      box-shadow: inset 0 4px rgba(255,255,255,.3), 0 4px 6px rgba(15,23,42,.12);
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *,*::before,*::after { animation-duration:.01ms !important; animation-iteration-count:1 !important; }
+    }
+  </style>
+</head>
+<body class="sky-pattern min-h-screen overflow-x-hidden text-slate-800">
+  <div aria-hidden="true" class="fixed inset-0 overflow-hidden pointer-events-none select-none">
+    <div class="float-slow absolute left-[3%] top-[5%] text-5xl md:text-7xl opacity-90">☁️</div>
+    <div class="float-medium absolute right-[4%] top-[9%] text-4xl md:text-6xl opacity-80">☁️</div>
+    <div class="float-slow absolute left-[5%] bottom-[7%] text-5xl md:text-7xl">🌈</div>
+    <div class="float-medium absolute right-[5%] bottom-[10%] text-4xl md:text-6xl">🪐</div>
+    <div class="absolute left-[18%] top-[17%] text-2xl">✨</div>
+    <div class="absolute right-[18%] top-[26%] text-3xl">⭐</div>
+  </div>
+
+  <main class="relative z-10 mx-auto flex min-h-screen w-full max-w-6xl items-center justify-center p-3 sm:p-5 md:p-8">
+    <section class="w-full overflow-hidden rounded-[2rem] border-4 border-white/75 bg-white/95 shadow-game backdrop-blur-sm">
+      <header class="bg-gradient-to-r from-blue-700 via-violet-600 to-fuchsia-600 px-5 py-6 text-white sm:px-8 sm:py-8">
+        <div class="flex flex-col items-center gap-3 text-center sm:flex-row sm:text-left">
+          <div class="robot-idle rounded-3xl bg-white/20 p-3 text-6xl shadow-inner" aria-hidden="true">🤖</div>
+          <div>
+            <p class="text-sm font-semibold uppercase tracking-[.2em] text-cyan-100">Bienvenido a</p>
+            <h1 class="text-3xl font-bold leading-tight sm:text-5xl">Academia Espacial</h1>
+            <p class="mt-2 text-base font-medium text-violet-100 sm:text-xl">¡Elige una misión y aprende jugando!</p>
+          </div>
+        </div>
+      </header>
+
+      <div class="p-5 sm:p-8">
+        <div class="mb-6 rounded-3xl border-4 border-cyan-100 bg-gradient-to-r from-cyan-50 to-blue-50 p-4 text-center">
+          <p class="text-lg font-bold text-blue-700 sm:text-2xl">🚀 ¿Qué quieres practicar hoy?</p>
+          <p class="mt-1 text-sm font-semibold text-slate-500 sm:text-base">Pulsa una tarjeta para comenzar la aventura.</p>
+        </div>
+
+        <nav class="grid gap-6 md:grid-cols-2" aria-label="Juegos disponibles">
+          <a href="sumas_aventura_espacial.html" class="card-enter group flex min-h-[300px] flex-col overflow-hidden rounded-[2rem] border-4 border-green-100 bg-gradient-to-br from-white to-green-50 shadow-card transition hover:-translate-y-2 hover:border-green-300 focus:outline-none focus:ring-4 focus:ring-green-300">
+            <div class="flex flex-1 flex-col items-center justify-center p-6 text-center">
+              <div class="mb-4 flex items-center justify-center gap-3" aria-hidden="true">
+                <span class="rounded-2xl bg-blue-500 px-4 py-2 text-4xl font-bold text-white shadow-lg">2</span>
+                <span class="text-5xl font-bold text-green-600">+</span>
+                <span class="rounded-2xl bg-yellow-400 px-4 py-2 text-4xl font-bold text-slate-800 shadow-lg">3</span>
+              </div>
+              <h2 class="text-3xl font-bold text-green-700 sm:text-4xl">Misión Suma</h2>
+              <p class="mt-3 max-w-md text-lg font-semibold text-slate-600">Practica sumas sencillas con números del 1 al 5.</p>
+            </div>
+            <div class="bg-gradient-to-r from-green-500 to-emerald-500 px-5 py-4 text-center text-2xl font-bold text-white transition group-hover:brightness-105">¡Jugar! 🚀</div>
+          </a>
+
+          <a href="mision_secuencias_geometricas.html" class="card-enter group flex min-h-[300px] flex-col overflow-hidden rounded-[2rem] border-4 border-violet-100 bg-gradient-to-br from-white to-violet-50 shadow-card transition hover:-translate-y-2 hover:border-violet-300 focus:outline-none focus:ring-4 focus:ring-violet-300">
+            <div class="flex flex-1 flex-col items-center justify-center p-6 text-center">
+              <div class="mb-5 flex items-center gap-2" aria-hidden="true">
+                <span class="mini-shape rounded-full bg-yellow-400"></span>
+                <span class="text-2xl font-bold text-violet-300">›</span>
+                <span class="mini-shape rounded-lg bg-red-500"></span>
+                <span class="text-2xl font-bold text-violet-300">›</span>
+                <span class="mini-shape rounded-full bg-yellow-400"></span>
+                <span class="flex h-10 w-10 items-center justify-center rounded-xl border-4 border-dashed border-violet-400 bg-violet-100 text-2xl font-bold text-violet-600">?</span>
+              </div>
+              <h2 class="text-3xl font-bold text-violet-700 sm:text-4xl">Misión Secuencias</h2>
+              <p class="mt-3 max-w-md text-lg font-semibold text-slate-600">Descubre patrones de formas geométricas y colores.</p>
+            </div>
+            <div class="bg-gradient-to-r from-violet-600 to-fuchsia-500 px-5 py-4 text-center text-2xl font-bold text-white transition group-hover:brightness-105">¡Jugar! 🚀</div>
+          </a>
+        </nav>
+
+        <footer class="mt-7 text-center text-sm font-semibold text-slate-500">
+          ⭐ Aprende a tu ritmo, celebra tus aciertos y diviértete.
+        </footer>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
