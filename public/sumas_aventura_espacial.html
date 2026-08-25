@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#2563eb">
+  <title>Misión Suma</title>
+
+  <!-- Tailwind CSS desde CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Fuente infantil y legible -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { fredoka: ['Fredoka', 'sans-serif'] },
+          boxShadow: {
+            game: '0 10px 0 rgba(30, 64, 175, .20), 0 20px 45px rgba(30, 64, 175, .25)',
+            button: '0 7px 0 #15803d',
+            buttonPressed: '0 2px 0 #15803d'
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    * { -webkit-tap-highlight-color: transparent; }
+    body { font-family: "Fredoka", sans-serif; }
+
+    .sky-pattern {
+      background-color: #38bdf8;
+      background-image:
+        radial-gradient(circle at 12% 20%, rgba(255,255,255,.42) 0 3px, transparent 4px),
+        radial-gradient(circle at 82% 14%, rgba(255,255,255,.35) 0 2px, transparent 3px),
+        linear-gradient(180deg, #38bdf8 0%, #67e8f9 48%, #a7f3d0 100%);
+    }
+
+    .float-slow { animation: float 5s ease-in-out infinite; }
+    .float-medium { animation: float 4s ease-in-out infinite reverse; }
+    .robot-idle { animation: robotIdle 2.6s ease-in-out infinite; transform-origin: bottom; }
+    .question-pop { animation: questionPop .42s cubic-bezier(.2,.8,.2,1); }
+    .celebrate { animation: celebrate .65s ease; }
+    .shake { animation: shake .38s ease; }
+    .star-pulse { animation: starPulse .5s ease; }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0) rotate(-1deg); }
+      50% { transform: translateY(-12px) rotate(1deg); }
+    }
+    @keyframes robotIdle {
+      0%, 100% { transform: translateY(0) rotate(-1deg); }
+      50% { transform: translateY(-5px) rotate(1deg); }
+    }
+    @keyframes questionPop {
+      0% { transform: scale(.72) rotate(-4deg); opacity: .2; }
+      70% { transform: scale(1.08) rotate(1deg); }
+      100% { transform: scale(1) rotate(0); opacity: 1; }
+    }
+    @keyframes celebrate {
+      0%,100% { transform: scale(1) rotate(0); }
+      35% { transform: scale(1.16) rotate(-3deg); }
+      70% { transform: scale(1.08) rotate(3deg); }
+    }
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      25% { transform: translateX(-9px); }
+      50% { transform: translateX(9px); }
+      75% { transform: translateX(-5px); }
+    }
+    @keyframes starPulse {
+      0% { transform: scale(.5) rotate(-20deg); }
+      70% { transform: scale(1.35) rotate(10deg); }
+      100% { transform: scale(1) rotate(0); }
+    }
+
+    .confetti-piece {
+      position: fixed;
+      z-index: 100;
+      width: 11px;
+      height: 18px;
+      border-radius: 3px;
+      pointer-events: none;
+      animation: confettiFall 1.6s ease-out forwards;
+    }
+    @keyframes confettiFall {
+      0% { transform: translate3d(0,-10vh,0) rotate(0); opacity: 1; }
+      100% { transform: translate3d(var(--drift),105vh,0) rotate(760deg); opacity: .8; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; }
+    }
+  </style>
+</head>
+<body class="sky-pattern min-h-screen overflow-x-hidden text-slate-800">
+  <!-- Decoración -->
+  <div aria-hidden="true" class="fixed inset-0 overflow-hidden pointer-events-none select-none">
+    <div class="float-slow absolute left-[3%] top-[5%] text-5xl md:text-7xl opacity-90">☁️</div>
+    <div class="float-medium absolute right-[4%] top-[9%] text-4xl md:text-6xl opacity-80">☁️</div>
+    <div class="float-slow absolute left-[6%] bottom-[7%] text-5xl md:text-7xl">🌈</div>
+    <div class="float-medium absolute right-[5%] bottom-[10%] text-4xl md:text-6xl">🪐</div>
+    <div class="absolute left-[18%] top-[15%] text-2xl">✨</div>
+    <div class="absolute right-[18%] top-[26%] text-3xl">⭐</div>
+  </div>
+
+  <main class="relative z-10 mx-auto flex min-h-screen w-full max-w-5xl items-center justify-center p-3 sm:p-5 md:p-8">
+    <section class="w-full overflow-hidden rounded-[2rem] border-4 border-white/75 bg-white/95 shadow-game backdrop-blur-sm">
+      <!-- Cabecera -->
+      <header class="bg-gradient-to-r from-blue-700 via-violet-600 to-fuchsia-600 px-4 py-4 text-white sm:px-7">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <div class="rounded-2xl bg-white/20 p-2 text-4xl shadow-inner" aria-hidden="true">🚀</div>
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-[.18em] text-cyan-100">Academia espacial</p>
+              <h1 class="text-2xl font-bold leading-tight sm:text-4xl">Misión Suma</h1>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <button id="soundButton" type="button" aria-label="Desactivar sonido" aria-pressed="true" class="rounded-xl bg-white/20 px-3 py-2 text-xl font-bold transition hover:bg-white/30 focus:outline-none focus:ring-4 focus:ring-white/50">🔊</button>
+            <button id="resetButton" type="button" class="rounded-xl bg-white/20 px-3 py-2 text-sm font-bold transition hover:bg-white/30 focus:outline-none focus:ring-4 focus:ring-white/50">↻ Reiniciar</button>
+          </div>
+        </div>
+      </header>
+
+      <div class="grid gap-5 p-4 sm:p-6 md:grid-cols-[1fr_1.5fr] md:p-8">
+        <!-- Panel mascota y progreso -->
+        <aside class="order-2 space-y-4 md:order-1">
+          <div class="rounded-3xl border-4 border-cyan-100 bg-gradient-to-b from-cyan-50 to-blue-100 p-4 text-center shadow-lg">
+            <div id="robot" class="robot-idle mx-auto text-7xl sm:text-8xl" role="img" aria-label="Robot mascota">🤖</div>
+            <div id="speech" role="status" aria-live="polite" class="relative mt-3 rounded-2xl bg-white p-3 text-lg font-bold text-blue-700 shadow-sm">
+              ¡Hola! ¿Preparado para despegar?
+            </div>
+          </div>
+
+          <div class="rounded-3xl bg-indigo-50 p-4 shadow-inner">
+            <div class="mb-2 flex items-center justify-between gap-2">
+              <div>
+                <p class="text-sm font-semibold text-indigo-500">Rango actual</p>
+                <p id="levelName" class="text-xl font-bold text-indigo-800">🌱 Principiante</p>
+              </div>
+              <span id="progressText" class="rounded-full bg-indigo-200 px-3 py-1 text-sm font-bold text-indigo-800">0 / 5</span>
+            </div>
+            <div class="h-5 overflow-hidden rounded-full border-2 border-indigo-200 bg-white" aria-label="Progreso del nivel">
+              <div id="progressBar" class="h-full w-0 rounded-full bg-gradient-to-r from-amber-300 via-yellow-400 to-orange-400 transition-all duration-500"></div>
+            </div>
+            <p id="nextLevelText" class="mt-2 text-center text-sm font-semibold text-indigo-600">Consigue 5 aciertos para subir de nivel</p>
+          </div>
+
+          <div class="grid grid-cols-3 gap-2 text-center">
+            <div class="rounded-2xl bg-green-100 p-3">
+              <div class="text-2xl" aria-hidden="true">🏆</div>
+              <div class="text-xs font-semibold text-green-700">Aciertos</div>
+              <div id="correctCount" class="text-2xl font-bold text-green-700">0</div>
+            </div>
+            <div class="rounded-2xl bg-red-100 p-3">
+              <div class="text-2xl" aria-hidden="true">🎯</div>
+              <div class="text-xs font-semibold text-red-700">Fallos</div>
+              <div id="wrongCount" class="text-2xl font-bold text-red-700">0</div>
+            </div>
+            <div class="rounded-2xl bg-orange-100 p-3">
+              <div class="text-2xl" aria-hidden="true">🔥</div>
+              <div class="text-xs font-semibold text-orange-700">Racha</div>
+              <div id="streakCount" class="text-2xl font-bold text-orange-700">0</div>
+            </div>
+          </div>
+        </aside>
+
+        <!-- Zona de juego -->
+        <div class="order-1 md:order-2">
+          <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-1 rounded-full bg-yellow-100 px-4 py-2 text-lg font-bold text-amber-700">
+              <span id="starIcon">⭐</span>
+              <span id="starCount">0</span>
+              <span class="text-sm">estrellas</span>
+            </div>
+            <div id="badgeDisplay" class="rounded-full bg-slate-100 px-4 py-2 text-sm font-bold text-slate-600">🎒 Sin medalla todavía</div>
+          </div>
+
+          <div id="gameCard" class="rounded-[2rem] border-4 border-violet-100 bg-gradient-to-br from-white to-violet-50 p-5 text-center shadow-xl sm:p-7">
+            <p class="text-base font-semibold text-violet-500 sm:text-lg">¿Cuánto es?</p>
+            <div id="question" class="question-pop my-3 text-6xl font-bold tracking-tight text-violet-700 sm:my-5 sm:text-8xl">2 + 3</div>
+
+            <label for="answer" class="sr-only">Escribe el resultado</label>
+            <input id="answer" type="number" inputmode="numeric" min="0" max="100" autocomplete="off" placeholder="?" aria-describedby="message" class="mx-auto block w-full max-w-sm rounded-2xl border-4 border-blue-200 bg-white px-4 py-3 text-center text-4xl font-bold text-blue-800 shadow-inner outline-none transition placeholder:text-blue-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-200 sm:text-5xl">
+
+            <button id="checkButton" type="button" class="mt-5 w-full max-w-sm translate-y-0 rounded-2xl bg-gradient-to-r from-green-500 to-emerald-500 px-5 py-4 text-2xl font-bold text-white shadow-button transition hover:scale-[1.03] hover:brightness-105 active:translate-y-[5px] active:shadow-buttonPressed focus:outline-none focus:ring-4 focus:ring-green-200 disabled:cursor-not-allowed disabled:opacity-60">
+              🚀 ¡Comprobar!
+            </button>
+
+            <div id="message" role="status" aria-live="assertive" class="mt-5 min-h-[3rem] text-xl font-bold text-violet-700 sm:text-2xl">Escribe tu respuesta y pulsa el botón</div>
+          </div>
+
+          <div class="mt-4 rounded-2xl bg-white/70 p-3 text-center text-sm font-semibold text-slate-600">
+            💡 También puedes pulsar <kbd class="rounded-md border border-slate-300 bg-white px-2 py-1 font-bold shadow-sm">Enter</kbd>
+          </div>
+
+          <div class="mt-4">
+            <p class="mb-2 text-center text-sm font-bold text-indigo-700">Tu colección de medallas</p>
+            <div id="medals" class="flex min-h-[4.5rem] items-center justify-center gap-3 rounded-2xl bg-indigo-50 p-3" aria-label="Medallas conseguidas">
+              <span class="text-center text-sm font-semibold text-indigo-300">Todavía no hay medallas. ¡La primera llega con 5 aciertos!</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Ventana de nueva medalla -->
+  <div id="badgeModal" class="fixed inset-0 z-[120] hidden items-center justify-center bg-indigo-950/60 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="badgeTitle">
+    <div class="celebrate w-full max-w-sm rounded-[2rem] border-4 border-yellow-300 bg-white p-7 text-center shadow-2xl">
+      <div id="modalBadge" class="text-8xl">🥉</div>
+      <h2 id="badgeTitle" class="mt-2 text-3xl font-bold text-violet-700">¡Nueva medalla!</h2>
+      <p id="badgeMessage" class="mt-2 text-lg font-semibold text-slate-600">¡Has conseguido la medalla de bronce!</p>
+      <button id="closeModal" type="button" class="mt-5 w-full rounded-2xl bg-violet-600 px-5 py-3 text-xl font-bold text-white shadow-lg transition hover:bg-violet-700 focus:outline-none focus:ring-4 focus:ring-violet-200">¡Seguir jugando! 🚀</button>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      'use strict';
+
+      const levels = [
+        { name: '🌱 Principiante', max: 5, from: 0, to: 5 },
+        { name: '🚀 Explorador', max: 5, from: 5, to: 10 },
+        { name: '⭐ Superestrella', max: 5, from: 10, to: Infinity }
+      ];
+
+      const badgeMilestones = {
+        5:  { icon: '🥉', name: 'Medalla de bronce' },
+        10: { icon: '🥈', name: 'Medalla de plata' },
+        20: { icon: '🥇', name: 'Medalla de oro' }
+      };
+
+      let num1 = 1;
+      let num2 = 1;
+      let correctAnswer = 1;
+      let correctCount = 0;
+      let wrongCount = 0;
+      let streak = 0;
+      let stars = 0;
+      let soundEnabled = true;
+      let locked = false;
+      let audioContext = null;
+      const earnedBadges = [];
+
+      const $ = (id) => document.getElementById(id);
+      const question = $('question');
+      const answer = $('answer');
+      const message = $('message');
+      const checkButton = $('checkButton');
+      const correctCountEl = $('correctCount');
+      const wrongCountEl = $('wrongCount');
+      const streakCountEl = $('streakCount');
+      const starCountEl = $('starCount');
+      const starIcon = $('starIcon');
+      const progressBar = $('progressBar');
+      const progressText = $('progressText');
+      const levelName = $('levelName');
+      const nextLevelText = $('nextLevelText');
+      const robot = $('robot');
+      const speech = $('speech');
+      const gameCard = $('gameCard');
+      const medals = $('medals');
+      const badgeDisplay = $('badgeDisplay');
+      const badgeModal = $('badgeModal');
+      const soundButton = $('soundButton');
+
+      function currentLevel() {
+        if (correctCount < 5) return levels[0];
+        if (correctCount < 10) return levels[1];
+        return levels[2];
+      }
+
+      function randomInt(max) {
+        return Math.floor(Math.random() * max) + 1;
+      }
+
+      function generateQuestion() {
+        const level = currentLevel();
+        num1 = randomInt(level.max);
+        num2 = randomInt(level.max);
+        correctAnswer = num1 + num2;
+        question.textContent = `${num1} + ${num2}`;
+        question.classList.remove('question-pop');
+        void question.offsetWidth;
+        question.classList.add('question-pop');
+        answer.value = '';
+        answer.disabled = false;
+        checkButton.disabled = false;
+        locked = false;
+        answer.focus();
+      }
+
+      function playTone(kind) {
+        if (!soundEnabled) return;
+        try {
+          audioContext ||= new (window.AudioContext || window.webkitAudioContext)();
+          const now = audioContext.currentTime;
+          const notes = kind === 'success'
+            ? [{f:523.25,t:0,d:.13},{f:659.25,t:.13,d:.13},{f:783.99,t:.26,d:.24}]
+            : [{f:220,t:0,d:.16},{f:174.61,t:.15,d:.25}];
+          notes.forEach((note) => {
+            const oscillator = audioContext.createOscillator();
+            const gain = audioContext.createGain();
+            oscillator.type = kind === 'success' ? 'sine' : 'triangle';
+            oscillator.frequency.setValueAtTime(note.f, now + note.t);
+            gain.gain.setValueAtTime(.001, now + note.t);
+            gain.gain.exponentialRampToValueAtTime(.17, now + note.t + .018);
+            gain.gain.exponentialRampToValueAtTime(.001, now + note.t + note.d);
+            oscillator.connect(gain).connect(audioContext.destination);
+            oscillator.start(now + note.t);
+            oscillator.stop(now + note.t + note.d + .03);
+          });
+        } catch (error) {
+          console.warn('El navegador no permite reproducir sonido.', error);
+        }
+      }
+
+      function launchConfetti(amount = 55) {
+        const colors = ['#facc15','#fb7185','#22c55e','#38bdf8','#a855f7','#f97316'];
+        for (let i = 0; i < amount; i++) {
+          const piece = document.createElement('span');
+          piece.className = 'confetti-piece';
+          piece.style.left = `${Math.random() * 100}vw`;
+          piece.style.top = `${-10 - Math.random() * 15}vh`;
+          piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+          piece.style.setProperty('--drift', `${-100 + Math.random() * 200}px`);
+          piece.style.animationDelay = `${Math.random() * .22}s`;
+          piece.style.animationDuration = `${1.25 + Math.random() * .8}s`;
+          document.body.appendChild(piece);
+          piece.addEventListener('animationend', () => piece.remove());
+        }
+      }
+
+      function updateDashboard() {
+        correctCountEl.textContent = correctCount;
+        wrongCountEl.textContent = wrongCount;
+        streakCountEl.textContent = streak;
+        starCountEl.textContent = stars;
+
+        const level = currentLevel();
+        levelName.textContent = level.name;
+        if (level.to === Infinity) {
+          progressBar.style.width = '100%';
+          progressText.textContent = `${correctCount} aciertos`;
+          nextLevelText.textContent = '¡Ya eres una superestrella de las sumas!';
+        } else {
+          const progress = correctCount - level.from;
+          const total = level.to - level.from;
+          progressBar.style.width = `${Math.min(100, progress / total * 100)}%`;
+          progressText.textContent = `${progress} / ${total}`;
+          const remaining = level.to - correctCount;
+          nextLevelText.textContent = `Te ${remaining === 1 ? 'falta' : 'faltan'} ${remaining} ${remaining === 1 ? 'acierto' : 'aciertos'} para subir de nivel`;
+        }
+      }
+
+      function animateClass(element, className) {
+        element.classList.remove(className);
+        void element.offsetWidth;
+        element.classList.add(className);
+      }
+
+      function awardBadgeIfNeeded() {
+        const badge = badgeMilestones[correctCount];
+        if (!badge || earnedBadges.some((item) => item.name === badge.name)) return;
+        earnedBadges.push(badge);
+        renderBadges();
+        $('modalBadge').textContent = badge.icon;
+        $('badgeMessage').textContent = `¡Has conseguido la ${badge.name.toLowerCase()}!`;
+        badgeModal.classList.remove('hidden');
+        badgeModal.classList.add('flex');
+        launchConfetti(85);
+        setTimeout(() => $('closeModal').focus(), 50);
+      }
+
+      function renderBadges() {
+        medals.innerHTML = '';
+        earnedBadges.forEach((badge) => {
+          const item = document.createElement('div');
+          item.className = 'star-pulse rounded-xl bg-white px-3 py-2 text-center shadow-sm';
+          item.innerHTML = `<div class="text-4xl">${badge.icon}</div><div class="text-xs font-bold text-indigo-700">${badge.name.replace('Medalla de ', '')}</div>`;
+          medals.appendChild(item);
+        });
+        const latest = earnedBadges[earnedBadges.length - 1];
+        badgeDisplay.textContent = latest ? `${latest.icon} ${latest.name}` : '🎒 Sin medalla todavía';
+      }
+
+      function finishTurn(delay) {
+        answer.disabled = true;
+        checkButton.disabled = true;
+        locked = true;
+        setTimeout(generateQuestion, delay);
+      }
+
+      function checkAnswer() {
+        if (locked) return;
+        const raw = answer.value.trim();
+        if (raw === '') {
+          message.textContent = '🤔 Escribe un número antes de comprobar';
+          message.className = 'mt-5 min-h-[3rem] text-xl font-bold text-orange-600 sm:text-2xl';
+          speech.textContent = '¡Tú puedes! Escribe un número.';
+          animateClass(answer, 'shake');
+          playTone('error');
+          answer.focus();
+          return;
+        }
+
+        const userAnswer = Number(raw);
+        if (!Number.isInteger(userAnswer) || userAnswer < 0 || userAnswer > 100) {
+          message.textContent = '🔢 Escribe un número entero entre 0 y 100';
+          message.className = 'mt-5 min-h-[3rem] text-xl font-bold text-orange-600 sm:text-2xl';
+          answer.select();
+          return;
+        }
+
+        if (userAnswer === correctAnswer) {
+          correctCount++;
+          streak++;
+          const bonus = streak >= 5 ? 3 : streak >= 3 ? 2 : 1;
+          stars += bonus;
+          message.textContent = bonus > 1 ? `🎉 ¡Correcto! Racha especial: +${bonus} estrellas` : '🎉 ¡Fantástico! Has ganado una estrella';
+          message.className = 'mt-5 min-h-[3rem] text-xl font-bold text-green-600 sm:text-2xl';
+          speech.textContent = streak >= 3 ? `¡Increíble! Llevas ${streak} seguidas.` : '¡Respuesta correcta! ¡Sigue así!';
+          robot.textContent = '🤩';
+          animateClass(gameCard, 'celebrate');
+          animateClass(starIcon, 'star-pulse');
+          playTone('success');
+          launchConfetti(streak >= 5 ? 75 : 42);
+          updateDashboard();
+          awardBadgeIfNeeded();
+          finishTurn(1350);
+        } else {
+          wrongCount++;
+          streak = 0;
+          message.textContent = `💡 Casi. ${num1} + ${num2} es ${correctAnswer}`;
+          message.className = 'mt-5 min-h-[3rem] text-xl font-bold text-red-600 sm:text-2xl';
+          speech.textContent = 'No pasa nada. ¡Cada intento te hace más fuerte!';
+          robot.textContent = '🤗';
+          animateClass(gameCard, 'shake');
+          playTone('error');
+          updateDashboard();
+          finishTurn(2100);
+        }
+      }
+
+      function resetGame() {
+        correctCount = 0;
+        wrongCount = 0;
+        streak = 0;
+        stars = 0;
+        earnedBadges.length = 0;
+        robot.textContent = '🤖';
+        speech.textContent = '¡Nueva misión! Vamos a por todas.';
+        message.textContent = 'Escribe tu respuesta y pulsa el botón';
+        message.className = 'mt-5 min-h-[3rem] text-xl font-bold text-violet-700 sm:text-2xl';
+        renderBadges();
+        updateDashboard();
+        generateQuestion();
+      }
+
+      checkButton.addEventListener('click', checkAnswer);
+      answer.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') checkAnswer();
+      });
+      $('resetButton').addEventListener('click', resetGame);
+      soundButton.addEventListener('click', () => {
+        soundEnabled = !soundEnabled;
+        soundButton.textContent = soundEnabled ? '🔊' : '🔇';
+        soundButton.setAttribute('aria-label', soundEnabled ? 'Desactivar sonido' : 'Activar sonido');
+        soundButton.setAttribute('aria-pressed', String(soundEnabled));
+        if (soundEnabled) playTone('success');
+      });
+      $('closeModal').addEventListener('click', () => {
+        badgeModal.classList.add('hidden');
+        badgeModal.classList.remove('flex');
+        answer.focus();
+      });
+      badgeModal.addEventListener('click', (event) => {
+        if (event.target === badgeModal) $('closeModal').click();
+      });
+
+      updateDashboard();
+      generateQuestion();
+    })();
+  </script>
+</body>
+</html>

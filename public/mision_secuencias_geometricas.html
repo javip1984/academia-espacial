@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#2563eb">
+  <title>Misión Secuencias</title>
+
+  <!-- Tailwind CSS desde CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Fuente infantil y legible -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { fredoka: ['Fredoka', 'sans-serif'] },
+          boxShadow: {
+            game: '0 10px 0 rgba(30,64,175,.20), 0 20px 45px rgba(30,64,175,.25)',
+            choice: '0 7px 0 rgba(99,102,241,.25)',
+            choicePressed: '0 2px 0 rgba(99,102,241,.25)'
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    * { -webkit-tap-highlight-color: transparent; }
+    body { font-family: "Fredoka", sans-serif; }
+
+    .sky-pattern {
+      background-color: #38bdf8;
+      background-image:
+        radial-gradient(circle at 12% 20%, rgba(255,255,255,.42) 0 3px, transparent 4px),
+        radial-gradient(circle at 82% 14%, rgba(255,255,255,.35) 0 2px, transparent 3px),
+        linear-gradient(180deg, #38bdf8 0%, #67e8f9 48%, #a7f3d0 100%);
+    }
+
+    .float-slow { animation: float 5s ease-in-out infinite; }
+    .float-medium { animation: float 4s ease-in-out infinite reverse; }
+    .robot-idle { animation: robotIdle 2.6s ease-in-out infinite; transform-origin: bottom; }
+    .sequence-pop { animation: sequencePop .42s cubic-bezier(.2,.8,.2,1); }
+    .celebrate { animation: celebrate .65s ease; }
+    .shake { animation: shake .38s ease; }
+    .star-pulse { animation: starPulse .5s ease; }
+
+    @keyframes float {
+      0%,100% { transform: translateY(0) rotate(-1deg); }
+      50% { transform: translateY(-12px) rotate(1deg); }
+    }
+    @keyframes robotIdle {
+      0%,100% { transform: translateY(0) rotate(-1deg); }
+      50% { transform: translateY(-5px) rotate(1deg); }
+    }
+    @keyframes sequencePop {
+      0% { transform: scale(.82); opacity: .2; }
+      70% { transform: scale(1.04); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    @keyframes celebrate {
+      0%,100% { transform: scale(1) rotate(0); }
+      35% { transform: scale(1.08) rotate(-2deg); }
+      70% { transform: scale(1.04) rotate(2deg); }
+    }
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      25% { transform: translateX(-9px); }
+      50% { transform: translateX(9px); }
+      75% { transform: translateX(-5px); }
+    }
+    @keyframes starPulse {
+      0% { transform: scale(.5) rotate(-20deg); }
+      70% { transform: scale(1.35) rotate(10deg); }
+      100% { transform: scale(1) rotate(0); }
+    }
+
+    .shape {
+      --shape-color: #ef4444;
+      display: inline-block;
+      width: clamp(42px, 8vw, 68px);
+      height: clamp(42px, 8vw, 68px);
+      background: var(--shape-color);
+      border: 4px solid rgba(15,23,42,.16);
+      box-shadow: inset 0 5px 0 rgba(255,255,255,.30), 0 5px 8px rgba(15,23,42,.16);
+      flex: 0 0 auto;
+    }
+    .shape-square { border-radius: 9px; }
+    .shape-circle { border-radius: 50%; }
+    .shape-rectangle { width: clamp(60px, 11vw, 92px); height: clamp(36px, 6vw, 50px); border-radius: 9px; }
+    .shape-oval { width: clamp(60px, 11vw, 92px); height: clamp(38px, 6vw, 52px); border-radius: 50%; }
+    .shape-diamond { transform: rotate(45deg) scale(.76); border-radius: 7px; }
+    .shape-triangle {
+      width: 0; height: 0; background: transparent; border: none; box-shadow: none;
+      border-left: clamp(24px, 4vw, 36px) solid transparent;
+      border-right: clamp(24px, 4vw, 36px) solid transparent;
+      border-bottom: clamp(45px, 8vw, 68px) solid var(--shape-color);
+      filter: drop-shadow(0 5px 3px rgba(15,23,42,.18));
+    }
+    .shape-question {
+      display: flex; align-items: center; justify-content: center;
+      width: clamp(48px, 8vw, 68px); height: clamp(48px, 8vw, 68px);
+      border: 4px dashed #8b5cf6; border-radius: 16px; background: #ede9fe;
+      color: #7c3aed; font-size: clamp(2rem, 6vw, 3.5rem); font-weight: 700;
+    }
+
+    .confetti-piece {
+      position: fixed; z-index: 100; width: 11px; height: 18px; border-radius: 3px;
+      pointer-events: none; animation: confettiFall 1.6s ease-out forwards;
+    }
+    @keyframes confettiFall {
+      0% { transform: translate3d(0,-10vh,0) rotate(0); opacity: 1; }
+      100% { transform: translate3d(var(--drift),105vh,0) rotate(760deg); opacity: .8; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,*::before,*::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; }
+    }
+  </style>
+</head>
+<body class="sky-pattern min-h-screen overflow-x-hidden text-slate-800">
+  <div aria-hidden="true" class="fixed inset-0 overflow-hidden pointer-events-none select-none">
+    <div class="float-slow absolute left-[3%] top-[5%] text-5xl md:text-7xl opacity-90">☁️</div>
+    <div class="float-medium absolute right-[4%] top-[9%] text-4xl md:text-6xl opacity-80">☁️</div>
+    <div class="float-slow absolute left-[6%] bottom-[7%] text-5xl md:text-7xl">🌈</div>
+    <div class="float-medium absolute right-[5%] bottom-[10%] text-4xl md:text-6xl">🪐</div>
+    <div class="absolute left-[18%] top-[15%] text-2xl">✨</div>
+    <div class="absolute right-[18%] top-[26%] text-3xl">⭐</div>
+  </div>
+
+  <main class="relative z-10 mx-auto flex min-h-screen w-full max-w-6xl items-center justify-center p-3 sm:p-5 md:p-8">
+    <section class="w-full overflow-hidden rounded-[2rem] border-4 border-white/75 bg-white/95 shadow-game backdrop-blur-sm">
+      <header class="bg-gradient-to-r from-blue-700 via-violet-600 to-fuchsia-600 px-4 py-4 text-white sm:px-7">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <div class="rounded-2xl bg-white/20 p-2 text-4xl shadow-inner" aria-hidden="true">🚀</div>
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-[.18em] text-cyan-100">Academia espacial</p>
+              <h1 class="text-2xl font-bold leading-tight sm:text-4xl">Misión Secuencias</h1>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <button id="soundButton" type="button" aria-label="Desactivar sonido" aria-pressed="true" class="rounded-xl bg-white/20 px-3 py-2 text-xl font-bold transition hover:bg-white/30 focus:outline-none focus:ring-4 focus:ring-white/50">🔊</button>
+            <button id="resetButton" type="button" class="rounded-xl bg-white/20 px-3 py-2 text-sm font-bold transition hover:bg-white/30 focus:outline-none focus:ring-4 focus:ring-white/50">↻ Reiniciar</button>
+          </div>
+        </div>
+      </header>
+
+      <div class="grid gap-5 p-4 sm:p-6 md:grid-cols-[1fr_1.7fr] md:p-8">
+        <aside class="order-2 space-y-4 md:order-1">
+          <div class="rounded-3xl border-4 border-cyan-100 bg-gradient-to-b from-cyan-50 to-blue-100 p-4 text-center shadow-lg">
+            <div id="robot" class="robot-idle mx-auto text-7xl sm:text-8xl" role="img" aria-label="Robot mascota">🤖</div>
+            <div id="speech" role="status" aria-live="polite" class="relative mt-3 rounded-2xl bg-white p-3 text-lg font-bold text-blue-700 shadow-sm">¡Observa con atención y encuentra el patrón!</div>
+          </div>
+
+          <div class="rounded-3xl bg-indigo-50 p-4 shadow-inner">
+            <div class="mb-2 flex items-center justify-between gap-2">
+              <div>
+                <p class="text-sm font-semibold text-indigo-500">Rango actual</p>
+                <p id="levelName" class="text-xl font-bold text-indigo-800">🌱 Principiante</p>
+              </div>
+              <span id="progressText" class="rounded-full bg-indigo-200 px-3 py-1 text-sm font-bold text-indigo-800">0 / 5</span>
+            </div>
+            <div class="h-5 overflow-hidden rounded-full border-2 border-indigo-200 bg-white" aria-label="Progreso del nivel">
+              <div id="progressBar" class="h-full w-0 rounded-full bg-gradient-to-r from-amber-300 via-yellow-400 to-orange-400 transition-all duration-500"></div>
+            </div>
+            <p id="nextLevelText" class="mt-2 text-center text-sm font-semibold text-indigo-600">Consigue 5 aciertos para subir de nivel</p>
+          </div>
+
+          <div class="grid grid-cols-3 gap-2 text-center">
+            <div class="rounded-2xl bg-green-100 p-3"><div class="text-2xl">🏆</div><div class="text-xs font-semibold text-green-700">Aciertos</div><div id="correctCount" class="text-2xl font-bold text-green-700">0</div></div>
+            <div class="rounded-2xl bg-red-100 p-3"><div class="text-2xl">🎯</div><div class="text-xs font-semibold text-red-700">Fallos</div><div id="wrongCount" class="text-2xl font-bold text-red-700">0</div></div>
+            <div class="rounded-2xl bg-orange-100 p-3"><div class="text-2xl">🔥</div><div class="text-xs font-semibold text-orange-700">Racha</div><div id="streakCount" class="text-2xl font-bold text-orange-700">0</div></div>
+          </div>
+        </aside>
+
+        <div class="order-1 md:order-2">
+          <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-1 rounded-full bg-yellow-100 px-4 py-2 text-lg font-bold text-amber-700"><span id="starIcon">⭐</span><span id="starCount">0</span><span class="text-sm">estrellas</span></div>
+            <div id="badgeDisplay" class="rounded-full bg-slate-100 px-4 py-2 text-sm font-bold text-slate-600">🎒 Sin medalla todavía</div>
+          </div>
+
+          <div id="gameCard" class="rounded-[2rem] border-4 border-violet-100 bg-gradient-to-br from-white to-violet-50 p-4 text-center shadow-xl sm:p-7">
+            <p class="text-base font-semibold text-violet-500 sm:text-lg">¿Qué figura viene después?</p>
+
+            <div id="sequence" class="sequence-pop my-5 flex min-h-[96px] items-center justify-center gap-2 overflow-x-auto rounded-2xl bg-white px-2 py-4 shadow-inner sm:gap-4" aria-label="Secuencia de figuras"></div>
+
+            <p class="mb-3 text-sm font-bold uppercase tracking-wider text-indigo-500">Elige una respuesta</p>
+            <div id="choices" class="grid grid-cols-3 gap-2 sm:gap-4" role="group" aria-label="Opciones de respuesta"></div>
+
+            <div id="message" role="status" aria-live="assertive" class="mt-5 min-h-[3rem] text-xl font-bold text-violet-700 sm:text-2xl">Mira la secuencia y pulsa una figura</div>
+          </div>
+
+          <div class="mt-4 rounded-2xl bg-white/70 p-3 text-center text-sm font-semibold text-slate-600">💡 Fíjate en la <strong>forma</strong> y también en el <strong>color</strong>.</div>
+
+          <div class="mt-4">
+            <p class="mb-2 text-center text-sm font-bold text-indigo-700">Tu colección de medallas</p>
+            <div id="medals" class="flex min-h-[4.5rem] items-center justify-center gap-3 rounded-2xl bg-indigo-50 p-3" aria-label="Medallas conseguidas">
+              <span class="text-center text-sm font-semibold text-indigo-300">Todavía no hay medallas. ¡La primera llega con 5 aciertos!</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="badgeModal" class="fixed inset-0 z-[120] hidden items-center justify-center bg-indigo-950/60 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="badgeTitle">
+    <div class="celebrate w-full max-w-sm rounded-[2rem] border-4 border-yellow-300 bg-white p-7 text-center shadow-2xl">
+      <div id="modalBadge" class="text-8xl">🥉</div>
+      <h2 id="badgeTitle" class="mt-2 text-3xl font-bold text-violet-700">¡Nueva medalla!</h2>
+      <p id="badgeMessage" class="mt-2 text-lg font-semibold text-slate-600">¡Has conseguido la medalla de bronce!</p>
+      <button id="closeModal" type="button" class="mt-5 w-full rounded-2xl bg-violet-600 px-5 py-3 text-xl font-bold text-white shadow-lg transition hover:bg-violet-700 focus:outline-none focus:ring-4 focus:ring-violet-200">¡Seguir jugando! 🚀</button>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      'use strict';
+
+      const shapes = [
+        { id: 'square', name: 'cuadrado' },
+        { id: 'triangle', name: 'triángulo' },
+        { id: 'circle', name: 'círculo' },
+        { id: 'diamond', name: 'rombo' },
+        { id: 'rectangle', name: 'rectángulo' },
+        { id: 'oval', name: 'óvalo' }
+      ];
+      const colors = [
+        { id: 'red', name: 'rojo', value: '#ef4444' },
+        { id: 'blue', name: 'azul', value: '#3b82f6' },
+        { id: 'yellow', name: 'amarillo', value: '#facc15' },
+        { id: 'green', name: 'verde', value: '#22c55e' }
+      ];
+      const levels = [
+        { name: '🌱 Principiante', from: 0, to: 5 },
+        { name: '🚀 Explorador', from: 5, to: 10 },
+        { name: '⭐ Superestrella', from: 10, to: Infinity }
+      ];
+      const badgeMilestones = {
+        5: { icon: '🥉', name: 'Medalla de bronce' },
+        10: { icon: '🥈', name: 'Medalla de plata' },
+        20: { icon: '🥇', name: 'Medalla de oro' }
+      };
+
+      let correctCount = 0, wrongCount = 0, streak = 0, stars = 0;
+      let soundEnabled = true, locked = false, audioContext = null;
+      let correctItem = null;
+      const earnedBadges = [];
+      const $ = id => document.getElementById(id);
+
+      function random(array) { return array[Math.floor(Math.random() * array.length)]; }
+      function randomInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+      function itemKey(item) { return `${item.shape.id}-${item.color.id}`; }
+      function makeItem(shape = random(shapes), color = random(colors)) { return { shape, color }; }
+      function sameItem(a, b) { return itemKey(a) === itemKey(b); }
+
+      function currentLevel() {
+        if (correctCount < 5) return levels[0];
+        if (correctCount < 10) return levels[1];
+        return levels[2];
+      }
+
+      function createPuzzle() {
+        const visibleLength = randomInt(3, 5);
+        const patternType = random(['AB', 'AAB', 'ABB', 'ABC']);
+        const patternSize = patternType === 'AB' ? 2 : 3;
+        const base = [];
+        while (base.length < patternSize) {
+          const candidate = makeItem();
+          if (!base.some(x => sameItem(x, candidate))) base.push(candidate);
+        }
+        let unit;
+        if (patternType === 'AB') unit = [base[0], base[1]];
+        if (patternType === 'AAB') unit = [base[0], base[0], base[1]];
+        if (patternType === 'ABB') unit = [base[0], base[1], base[1]];
+        if (patternType === 'ABC') unit = [base[0], base[1], base[2]];
+
+        const full = [];
+        for (let i = 0; i <= visibleLength; i++) full.push(unit[i % unit.length]);
+        return { visible: full.slice(0, visibleLength), answer: full[visibleLength] };
+      }
+
+      function shapeElement(item, includeLabel = false) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'flex min-w-0 flex-col items-center justify-center gap-2';
+        const shape = document.createElement('span');
+        shape.className = `shape shape-${item.shape.id}`;
+        shape.style.setProperty('--shape-color', item.color.value);
+        shape.setAttribute('role', 'img');
+        shape.setAttribute('aria-label', `${item.shape.name} ${item.color.name}`);
+        wrapper.appendChild(shape);
+        if (includeLabel) {
+          const label = document.createElement('span');
+          label.className = 'text-xs font-bold leading-tight text-slate-600 sm:text-sm';
+          label.textContent = `${item.shape.name} ${item.color.name}`;
+          wrapper.appendChild(label);
+        }
+        return wrapper;
+      }
+
+      function generateQuestion() {
+        const puzzle = createPuzzle();
+        correctItem = puzzle.answer;
+        const sequence = $('sequence');
+        sequence.innerHTML = '';
+        puzzle.visible.forEach((item, index) => {
+          sequence.appendChild(shapeElement(item));
+          const arrow = document.createElement('span');
+          arrow.className = 'text-xl font-bold text-violet-300';
+          arrow.textContent = '›';
+          arrow.setAttribute('aria-hidden', 'true');
+          sequence.appendChild(arrow);
+        });
+        const question = document.createElement('div');
+        question.className = 'shape-question';
+        question.textContent = '?';
+        question.setAttribute('aria-label', 'Figura que falta');
+        sequence.appendChild(question);
+        sequence.classList.remove('sequence-pop');
+        void sequence.offsetWidth;
+        sequence.classList.add('sequence-pop');
+
+        const options = [correctItem];
+        while (options.length < 3) {
+          const distractor = makeItem();
+          if (!options.some(x => sameItem(x, distractor))) options.push(distractor);
+        }
+        options.sort(() => Math.random() - .5);
+        const choices = $('choices');
+        choices.innerHTML = '';
+        options.forEach(item => {
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'choice flex min-h-[125px] items-center justify-center rounded-2xl border-4 border-indigo-100 bg-white p-2 shadow-choice transition hover:scale-[1.04] hover:border-indigo-300 active:translate-y-[5px] active:shadow-choicePressed focus:outline-none focus:ring-4 focus:ring-indigo-200 sm:min-h-[145px] sm:p-4';
+          button.setAttribute('aria-label', `Elegir ${item.shape.name} ${item.color.name}`);
+          button.appendChild(shapeElement(item, true));
+          button.addEventListener('click', () => checkAnswer(item, button));
+          choices.appendChild(button);
+        });
+        locked = false;
+      }
+
+      function playTone(kind) {
+        if (!soundEnabled) return;
+        try {
+          audioContext ||= new (window.AudioContext || window.webkitAudioContext)();
+          const now = audioContext.currentTime;
+          const notes = kind === 'success'
+            ? [{f:523.25,t:0,d:.13},{f:659.25,t:.13,d:.13},{f:783.99,t:.26,d:.24}]
+            : [{f:220,t:0,d:.16},{f:174.61,t:.15,d:.25}];
+          notes.forEach(note => {
+            const oscillator = audioContext.createOscillator();
+            const gain = audioContext.createGain();
+            oscillator.type = kind === 'success' ? 'sine' : 'triangle';
+            oscillator.frequency.setValueAtTime(note.f, now + note.t);
+            gain.gain.setValueAtTime(.001, now + note.t);
+            gain.gain.exponentialRampToValueAtTime(.17, now + note.t + .018);
+            gain.gain.exponentialRampToValueAtTime(.001, now + note.t + note.d);
+            oscillator.connect(gain).connect(audioContext.destination);
+            oscillator.start(now + note.t); oscillator.stop(now + note.t + note.d + .03);
+          });
+        } catch (error) { console.warn('El navegador no permite reproducir sonido.', error); }
+      }
+
+      function launchConfetti(amount = 55) {
+        const palette = ['#facc15','#fb7185','#22c55e','#38bdf8','#a855f7','#f97316'];
+        for (let i = 0; i < amount; i++) {
+          const piece = document.createElement('span');
+          piece.className = 'confetti-piece';
+          piece.style.left = `${Math.random() * 100}vw`;
+          piece.style.top = `${-10 - Math.random() * 15}vh`;
+          piece.style.background = random(palette);
+          piece.style.setProperty('--drift', `${-100 + Math.random() * 200}px`);
+          piece.style.animationDelay = `${Math.random() * .22}s`;
+          piece.style.animationDuration = `${1.25 + Math.random() * .8}s`;
+          document.body.appendChild(piece);
+          piece.addEventListener('animationend', () => piece.remove());
+        }
+      }
+
+      function animateClass(element, className) {
+        element.classList.remove(className); void element.offsetWidth; element.classList.add(className);
+      }
+
+      function updateDashboard() {
+        $('correctCount').textContent = correctCount;
+        $('wrongCount').textContent = wrongCount;
+        $('streakCount').textContent = streak;
+        $('starCount').textContent = stars;
+        const level = currentLevel();
+        $('levelName').textContent = level.name;
+        if (level.to === Infinity) {
+          $('progressBar').style.width = '100%';
+          $('progressText').textContent = `${correctCount} aciertos`;
+          $('nextLevelText').textContent = '¡Ya eres una superestrella de las secuencias!';
+        } else {
+          const progress = correctCount - level.from;
+          const total = level.to - level.from;
+          $('progressBar').style.width = `${Math.min(100, progress / total * 100)}%`;
+          $('progressText').textContent = `${progress} / ${total}`;
+          const remaining = level.to - correctCount;
+          $('nextLevelText').textContent = `Te ${remaining === 1 ? 'falta' : 'faltan'} ${remaining} ${remaining === 1 ? 'acierto' : 'aciertos'} para subir de nivel`;
+        }
+      }
+
+      function renderBadges() {
+        const medals = $('medals'); medals.innerHTML = '';
+        earnedBadges.forEach(badge => {
+          const item = document.createElement('div');
+          item.className = 'star-pulse rounded-xl bg-white px-3 py-2 text-center shadow-sm';
+          item.innerHTML = `<div class="text-4xl">${badge.icon}</div><div class="text-xs font-bold text-indigo-700">${badge.name.replace('Medalla de ', '')}</div>`;
+          medals.appendChild(item);
+        });
+        if (!earnedBadges.length) medals.innerHTML = '<span class="text-center text-sm font-semibold text-indigo-300">Todavía no hay medallas. ¡La primera llega con 5 aciertos!</span>';
+        const latest = earnedBadges.at(-1);
+        $('badgeDisplay').textContent = latest ? `${latest.icon} ${latest.name}` : '🎒 Sin medalla todavía';
+      }
+
+      function awardBadgeIfNeeded() {
+        const badge = badgeMilestones[correctCount];
+        if (!badge || earnedBadges.some(x => x.name === badge.name)) return;
+        earnedBadges.push(badge); renderBadges();
+        $('modalBadge').textContent = badge.icon;
+        $('badgeMessage').textContent = `¡Has conseguido la ${badge.name.toLowerCase()}!`;
+        $('badgeModal').classList.remove('hidden'); $('badgeModal').classList.add('flex');
+        launchConfetti(85);
+        setTimeout(() => $('closeModal').focus(), 50);
+      }
+
+      function disableChoices() {
+        document.querySelectorAll('.choice').forEach(button => button.disabled = true);
+      }
+
+      function checkAnswer(selected, button) {
+        if (locked) return;
+        locked = true; disableChoices();
+        if (sameItem(selected, correctItem)) {
+          correctCount++; streak++;
+          const bonus = streak >= 5 ? 3 : streak >= 3 ? 2 : 1;
+          stars += bonus;
+          $('message').textContent = bonus > 1 ? `🎉 ¡Correcto! Racha especial: +${bonus} estrellas` : '🎉 ¡Fantástico! Has ganado una estrella';
+          $('message').className = 'mt-5 min-h-[3rem] text-xl font-bold text-green-600 sm:text-2xl';
+          $('speech').textContent = streak >= 3 ? `¡Increíble! Llevas ${streak} seguidas.` : '¡Has encontrado el patrón!';
+          $('robot').textContent = '🤩';
+          button.classList.add('border-green-400','bg-green-50');
+          animateClass($('gameCard'), 'celebrate'); animateClass($('starIcon'), 'star-pulse');
+          playTone('success'); launchConfetti(streak >= 5 ? 75 : 42);
+          updateDashboard(); awardBadgeIfNeeded();
+          setTimeout(generateQuestion, 1400);
+        } else {
+          wrongCount++; streak = 0;
+          $('message').textContent = `💡 Casi. Era ${correctItem.shape.name} ${correctItem.color.name}`;
+          $('message').className = 'mt-5 min-h-[3rem] text-xl font-bold text-red-600 sm:text-2xl';
+          $('speech').textContent = 'No pasa nada. ¡Mira cómo se repite el patrón!';
+          $('robot').textContent = '🤗';
+          button.classList.add('border-red-400','bg-red-50');
+          document.querySelectorAll('.choice').forEach(choice => {
+            if (choice.getAttribute('aria-label') === `Elegir ${correctItem.shape.name} ${correctItem.color.name}`) choice.classList.add('border-green-400','bg-green-50');
+          });
+          animateClass($('gameCard'), 'shake'); playTone('error'); updateDashboard();
+          setTimeout(generateQuestion, 2300);
+        }
+      }
+
+      function resetGame() {
+        correctCount = wrongCount = streak = stars = 0; earnedBadges.length = 0;
+        $('robot').textContent = '🤖'; $('speech').textContent = '¡Nueva misión! Encuentra el patrón.';
+        $('message').textContent = 'Mira la secuencia y pulsa una figura';
+        $('message').className = 'mt-5 min-h-[3rem] text-xl font-bold text-violet-700 sm:text-2xl';
+        renderBadges(); updateDashboard(); generateQuestion();
+      }
+
+      $('resetButton').addEventListener('click', resetGame);
+      $('soundButton').addEventListener('click', () => {
+        soundEnabled = !soundEnabled;
+        $('soundButton').textContent = soundEnabled ? '🔊' : '🔇';
+        $('soundButton').setAttribute('aria-label', soundEnabled ? 'Desactivar sonido' : 'Activar sonido');
+        $('soundButton').setAttribute('aria-pressed', String(soundEnabled));
+        if (soundEnabled) playTone('success');
+      });
+      $('closeModal').addEventListener('click', () => {
+        $('badgeModal').classList.add('hidden'); $('badgeModal').classList.remove('flex');
+      });
+      $('badgeModal').addEventListener('click', event => { if (event.target === $('badgeModal')) $('closeModal').click(); });
+
+      updateDashboard(); generateQuestion();
+    })();
+  </script>
+</body>
+</html>
